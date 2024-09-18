@@ -8,6 +8,10 @@ public class Main {
         SudokuStorage sudokuStorage = new SudokuStorage();
         List<int[][]> sudoku = sudokuStorage.retrieveSudokusById("787b3ab0-cb18-4fde-9d27-4b4ba270c531");
         SudokuSolver sudokuSolver = new SudokuSolver(sudoku.getFirst());
-        sudokuSolver.solve();
+        int[][] board = sudokuSolver.solve();
+        System.out.println("solved board:");
+        SudokuSolver.prettyPrintSudoku(board);
+        System.out.println("original solved board:");
+        SudokuSolver.prettyPrintSudoku(sudoku.getLast());
     }
 }

@@ -1,8 +1,8 @@
 package org.example;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,15 +20,21 @@ public class SudokuSolver {
     }
 
     public int[][] solve() throws ExecutionException, InterruptedException {
-        while (true)
-        {
+        while (true) {
             boolean outcome = simpleElimination();
-            if(!outcome)
-            {
+            if (!outcome) {
                 outcome = blockElimination();
-                if(!outcome)
-                {
-                    break;
+                if (!outcome) {
+                    // try brute force
+                    if(bruteForceBoard(board))
+                    {
+                        System.out.println("solved");
+                        break;
+                    }
+                    else {
+                        System.out.println("unsolvable");
+                        break;
+                    }
                 }
             }
         }
@@ -37,7 +43,7 @@ public class SudokuSolver {
 
     public boolean simpleElimination() {
         try (ExecutorService executorService = Executors.newFixedThreadPool(board.length)) {
-            ArrayList<Callable<HashMap<Point,ArrayList<Integer>>>> callableArrayList = new ArrayList<>();
+            ArrayList<Callable<HashMap<Point, ArrayList<Integer>>>> callableArrayList = new ArrayList<>();
 
             // define tasks and add them to array list:
             for (int i = 0; i < 9; i++) {
@@ -64,7 +70,7 @@ public class SudokuSolver {
             // update possible options if the update operation is false
             updateCurrentOptions(result);
             return wasBoardUpdated;
-            
+
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -99,6 +105,7 @@ public class SudokuSolver {
         hashMap.put(new Point(x, y), candidates);
         return hashMap;
     }
+
     /// block elimination:
     public boolean blockElimination() throws InterruptedException, ExecutionException {
         // hashmap to return:
@@ -114,7 +121,7 @@ public class SudokuSolver {
         ArrayList<Callable<Optional<HashMap<Point, ArrayList<Integer>>>>> callables =
                 new ArrayList<>();
 
-        for (Map.Entry<Point, ArrayList<Integer>> entry: blocks.entrySet()) {
+        for (Map.Entry<Point, ArrayList<Integer>> entry : blocks.entrySet()) {
             Callable<Optional<HashMap<Point, ArrayList<Integer>>>> blockScanner =
                     () -> {
                         // find distinct value
@@ -154,24 +161,22 @@ public class SudokuSolver {
         // update board
         return updateBoard(result);
     }
-    private HashMap<Point, ArrayList<Integer>> groupCellsIntoBlocks(HashMap<Point, ArrayList<Integer>> unsolvedCells){
+
+    private HashMap<Point, ArrayList<Integer>> groupCellsIntoBlocks(HashMap<Point, ArrayList<Integer>> unsolvedCells) {
         // Creating a 2D array of HashMap<Point, ArrayList<Integer>>
         HashMap<Point, ArrayList<Integer>> blocks = new HashMap<>();
         // block split:
-        for (Map.Entry<Point, ArrayList<Integer>> entry: unsolvedCells.entrySet())
-        {
+        for (Map.Entry<Point, ArrayList<Integer>> entry : unsolvedCells.entrySet()) {
             Point point = entry.getKey();
-            int xBlock = (int) (Math.floor((double) point.x / 3) *3); // get row for block
-            int yBlock = (int) (( Math.floor((double) point.y / 3) *3)); // get column for block
-            if(!blocks.containsKey(new Point(xBlock, yBlock)))
-            {
+            int xBlock = (int) (Math.floor((double) point.x / 3) * 3); // get row for block
+            int yBlock = (int) ((Math.floor((double) point.y / 3) * 3)); // get column for block
+            if (!blocks.containsKey(new Point(xBlock, yBlock))) {
                 // clone array list:
                 ArrayList<Integer> byteArrayList = new ArrayList<>(entry.getValue());
-                blocks.put(new Point(xBlock,yBlock), byteArrayList);
-            }
-            else {
+                blocks.put(new Point(xBlock, yBlock), byteArrayList);
+            } else {
                 // retrieve array to update
-                Point point1 = new Point(xBlock,yBlock);
+                Point point1 = new Point(xBlock, yBlock);
                 ArrayList<Integer> currentArray = blocks.get(point1);
                 //merge with new values
                 currentArray.addAll(entry.getValue());
@@ -189,7 +194,7 @@ public class SudokuSolver {
                 Point searchedPoint = new Point(xVal, yVal);
                 try {
                     ArrayList<Integer> array = unsolvedCells.get(searchedPoint);
-                    Integer lookup = array.stream().filter(aByte -> aByte == lookupValue).findFirst().orElse( -1);
+                    Integer lookup = array.stream().filter(aByte -> aByte == lookupValue).findFirst().orElse(-1);
                     if (lookup != -1) {
                         return searchedPoint;
                     }
@@ -201,25 +206,48 @@ public class SudokuSolver {
         }
         return null;
     }
-    
+
     /// block elimination end
+
+    // brute force
+    private boolean bruteForceBoard(int[][] board) {
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board.length; j++) {
+                if (board[i][j] == 0) {
+                    for (int k = 1; k <= 9; k++) {
+                        if (Validator.isNumberValid(k, i, j, board)) {
+                            board[i][j] = k;
+                            if(bruteForceBoard(board))
+                            {
+                                return true;
+                            }
+                            else {
+                                board[i][j] = 0;
+                            }
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
     public void updateCurrentOptions(HashMap<Point, ArrayList<Integer>> options) {
         currentOptions.clear();
         for (Map.Entry<Point, ArrayList<Integer>> entry : options.entrySet()) {
-            if (entry.getValue().size() > 1)
-            {
+            if (entry.getValue().size() > 1) {
                 currentOptions.put(entry.getKey(), entry.getValue());
             }
         }
     }
 
-    public boolean updateBoard(HashMap<Point, ArrayList<Integer>> hashMap){
+    public boolean updateBoard(HashMap<Point, ArrayList<Integer>> hashMap) {
         boolean isUpdated = false;
-        for (Map.Entry<Point, ArrayList<Integer>> entry: hashMap.entrySet())
-        {
-            if(entry.getValue().size() == 1 && entry.getValue().getFirst() > 0)
-            {
-                updateCounter ++;
+        for (Map.Entry<Point, ArrayList<Integer>> entry : hashMap.entrySet()) {
+            if (entry.getValue().size() == 1 && entry.getValue().getFirst() > 0) {
+                updateCounter++;
                 board[entry.getKey().x][entry.getKey().y] = entry.getValue().getFirst();
                 isUpdated = true;
             }
@@ -236,6 +264,7 @@ public class SudokuSolver {
             System.out.println();
         }
     }
+
     public static void showCurrentOptions(HashMap<Point, ArrayList<Integer>> output) {
         // Iterate over the entries of the map
         for (Map.Entry<Point, ArrayList<Integer>> entry : output.entrySet()) {
