@@ -26,12 +26,10 @@ public class SudokuSolver {
                 outcome = blockElimination();
                 if (!outcome) {
                     // try brute force
-                    if(bruteForceBoard(board))
-                    {
+                    if (bruteForceBoard(board)) {
                         System.out.println("solved");
                         break;
-                    }
-                    else {
+                    } else {
                         System.out.println("unsolvable");
                         break;
                     }
@@ -217,11 +215,9 @@ public class SudokuSolver {
                     for (int k = 1; k <= 9; k++) {
                         if (Validator.isNumberValid(k, i, j, board)) {
                             board[i][j] = k;
-                            if(bruteForceBoard(board))
-                            {
+                            if (bruteForceBoard(board)) {
                                 return true;
-                            }
-                            else {
+                            } else {
                                 board[i][j] = 0;
                             }
                         }
