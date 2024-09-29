@@ -29,7 +29,7 @@ public static void main(String[] args) throws ExecutionException, InterruptedExc
         SudokuStorage sudokuStorage = new SudokuStorage();
         
         // retrieve 2 sudoku by id (solved and unsolved one)
-        // the is which is provided here may differ from yours. 
+        // the id which is provided here may differ from yours. 
         List<int[][]> sudoku = sudokuStorage.retrieveSudokusById("787b3ab0-cb18-4fde-9d27-4b4ba270c531");
         
         // the first sudoku in the list is the unsolved one.
